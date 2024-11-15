@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Keyboard Piano Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        .toggle-container {
+            margin-bottom: 30px;
+        }
+
+        .toggle-label {
+            font-size: 1.2em;
+            margin-right: 10px;
+        }
+
+        .status {
+            margin-top: 20px;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        .input-container {
+            margin-top: 30px;
+        }
+
+        textarea {
+            width: 80%;
+            height: 100px;
+        }
+
+        button {
+            padding: 10px 20px;
+            margin-top: 10px;
+        }
+
+        .output {
+            margin-top: 20px;
+            font-size: 1.1em;
+            color: #333;
+        }
+
+        audio {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>Keyboard Piano Application</h1>
+
+    <div class="toggle-container">
+        <span class="toggle-label">Keyboard Layout:</span>
+        <label>
+            <input type="radio" name="keyboardLayout" value="standard" checked>
+            Standard
+        </label>
+        <label>
+            <input type="radio" name="keyboardLayout" value="custom">
+            Custom
+        </label>
+    </div>
+
+    <div class="status">
+        Current Layout: <span id="currentLayout">Standard</span>
+    </div>
+
+    <div class="input-container">
+        <h2>Translate Sheet Music to Keys</h2>
+        <textarea id="sheetMusicInput" placeholder="Enter sheet music notes, e.g., c4 e4 g4"></textarea><br>
+        <button id="translateButton">Translate</button>
+    </div>
+
+    <div class="output">
+        <h3>Keys to Play:</h3>
+        <div id="output"></div>
+    </div>
+
+    <!-- Include the audioPlay.js script -->
+    <script src="audio.js"></script>
+</body>
+</html>
