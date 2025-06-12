@@ -1,86 +1,938 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Keyboard Piano Application</title>
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin-top: 50px;
-        }
-
-        .toggle-container {
-            margin-bottom: 30px;
-        }
-
-        .toggle-label {
-            font-size: 1.2em;
-            margin-right: 10px;
-        }
-
-        .status {
-            margin-top: 20px;
-            font-size: 1.1em;
-            color: #333;
-        }
-
-        .input-container {
-            margin-top: 30px;
-        }
-
-        textarea {
-            width: 80%;
-            height: 100px;
-        }
-
-        button {
-            padding: 10px 20px;
-            margin-top: 10px;
-        }
-
-        .output {
-            margin-top: 20px;
-            font-size: 1.1em;
-            color: #333;
-        }
-
-        audio {
-            display: none;
-        }
+      body {
+        font-family: Arial, sans-serif;
+        text-align: center;
+        margin-top: 50px;
+      }
+      .toggle-container {
+        margin-bottom: 30px;
+      }
+      .toggle-label {
+        font-size: 1.2em;
+        margin-right: 10px;
+      }
+      .status {
+        margin-top: 20px;
+        font-size: 1.1em;
+        color: #333;
+      }
+      .input-container {
+        margin-top: 30px;
+      }
+      textarea {
+        width: 80%;
+        height: 100px;
+      }
+      button {
+        padding: 10px 20px;
+        margin-top: 10px;
+      }
+      .output {
+        margin-top: 20px;
+        font-size: 1.1em;
+        color: #333;
+      }
+      .init-button {
+        background-color: #4caf50;
+        color: white;
+        border: none;
+        padding: 15px 32px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        margin: 4px 2px;
+        cursor: pointer;
+        border-radius: 4px;
+      }
+      .ready-indicator {
+        color: green;
+        font-weight: bold;
+        margin-top: 10px;
+      }
+      .loading-indicator {
+        color: orange;
+        margin-top: 10px;
+      }
+      .octave-controls {
+        margin: 30px 0;
+        padding: 20px;
+        border: 2px solid #4caf50;
+        border-radius: 8px;
+        background-color: #f0f8f0;
+      }
+      .octave-display {
+        display: flex;
+        justify-content: space-around;
+        gap: 40px;
+      }
+      .octave-side {
+        text-align: center;
+        min-width: 200px;
+      }
+      .octave-side h3 {
+        margin: 0 0 10px 0;
+        color: #2e7d32;
+      }
+      .octave-info {
+        font-size: 1.1em;
+      }
+      .octave-keys {
+        margin-top: 8px;
+        font-family: monospace;
+        font-weight: bold;
+        color: #1976d2;
+      }
+      .init-section {
+        margin-bottom: 30px;
+        padding: 20px;
+        border: 2px solid #ddd;
+        border-radius: 8px;
+        background-color: #f9f9f9;
+      }
+      .debug-info {
+        margin-top: 30px;
+        padding: 20px;
+        border: 2px solid #2196f3;
+        border-radius: 8px;
+        background-color: #f3f8ff;
+        text-align: left;
+        max-width: 800px;
+        margin: 30px auto;
+      }
+      .debug-info h3 {
+        color: #1976d2;
+        margin-top: 0;
+      }
+      .debug-mapping {
+        font-family: monospace;
+        font-size: 0.9em;
+        white-space: pre-wrap;
+        background-color: #fff;
+        padding: 10px;
+        border-radius: 4px;
+        max-height: 200px;
+        overflow-y: auto;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <h1>Keyboard Piano Application</h1>
 
-    <div class="toggle-container">
-        <span class="toggle-label">Keyboard Layout:</span>
-        <label>
-            <input type="radio" name="keyboardLayout" value="standard" checked>
-            Standard
-        </label>
-        <label>
-            <input type="radio" name="keyboardLayout" value="custom">
-            Custom
-        </label>
+    <div class="init-section">
+      <button id="initAudio" class="init-button">
+        Click to Initialize Audio
+      </button>
+      <div id="loadingStatus" class="loading-indicator">
+        Click the button to start
+      </div>
     </div>
 
+    <div class="toggle-container">
+      <span class="toggle-label">Keyboard Layout:</span>
+      <label>
+        <input type="radio" name="keyboardLayout" value="standard" checked />
+        Standard
+      </label>
+      <label>
+        <input type="radio" name="keyboardLayout" value="custom" />
+        Custom
+      </label>
+    </div>
     <div class="status">
-        Current Layout: <span id="currentLayout">Standard</span>
+      Current Layout: <span id="currentLayout">Standard</span>
+    </div>
+
+    <div class="octave-controls">
+      <div class="octave-display">
+        <div class="octave-side">
+          <h3>Left Hand</h3>
+          <div class="octave-info">
+            <span>Octave: <span id="leftOctave">3</span></span>
+            <div class="octave-keys">
+              <span id="leftOctaveDown">x</span> ↓ | ↑
+              <span id="leftOctaveUp">c</span>
+            </div>
+          </div>
+        </div>
+        <div class="octave-side">
+          <h3>Right Hand</h3>
+          <div class="octave-info">
+            <span>Octave: <span id="rightOctave">4</span></span>
+            <div class="octave-keys">
+              <span id="rightOctaveDown">,</span> ↓ | ↑
+              <span id="rightOctaveUp">.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="debug-info">
+      <h3>Current Key Mappings (Debug)</h3>
+      <div id="debugMapping" class="debug-mapping">
+        Mappings will appear here after initialization...
+      </div>
     </div>
 
     <div class="input-container">
-        <h2>Translate Sheet Music to Keys</h2>
-        <textarea id="sheetMusicInput" placeholder="Enter sheet music notes, e.g., c4 e4 g4"></textarea><br>
-        <button id="translateButton">Translate</button>
+      <h2>Translate Sheet Music to Keys</h2>
+      <textarea
+        id="sheetMusicInput"
+        placeholder="Enter sheet music notes, e.g., c4 e4 g4"
+      ></textarea
+      ><br />
+      <button id="translateButton">Translate</button>
     </div>
-
     <div class="output">
-        <h3>Keys to Play:</h3>
-        <div id="output"></div>
+      <h3>Keys to Play:</h3>
+      <div id="output"></div>
     </div>
 
-    <!-- Include the audioPlay.js script -->
-    <script src="audio.js"></script>
-</body>
+    <script>
+      /**
+       * audioPlay.js - Fixed version with proper octave handling
+       * The main fix: differentiate between low and high gSharp notes
+       */
+
+      // Define the available notes
+      const notes = [
+        "a",
+        "aSharp",
+        "b",
+        "c",
+        "cSharp",
+        "d",
+        "dSharp",
+        "e",
+        "f",
+        "fSharp",
+        "g",
+        "gSharp",
+      ];
+
+      // Standard keyboard mapping - with position indicators for low/high gSharp
+      const standardKeyToNoteId = {
+        z: "gSharp2", // LOW gSharp (leftmost)
+        a: "a2",
+        q: "aSharp2",
+        v: "b2",
+        s: "c3",
+        w: "cSharp3",
+        d: "d3",
+        e: "dSharp3",
+        f: "f3",
+        b: "e3",
+        r: "fSharp3",
+        g: "g3",
+        t: "gSharp3", // HIGH gSharp (left hand)
+        "/": "gSharp3", // HIGH gSharp (right hand)
+        ";": "a3",
+        p: "aSharp3",
+        m: "b3",
+        l: "c4",
+        o: "cSharp4",
+        k: "d4",
+        i: "dSharp4",
+        j: "f4",
+        n: "e4",
+        u: "fSharp4",
+        h: "g4",
+        y: "gSharp4", // HIGHEST gSharp (rightmost)
+      };
+
+      // Custom keyboard mapping - with position indicators for low/high gSharp
+      const customKeyToNoteId = {
+        "'": "gSharp2", // LOW gSharp (leftmost)
+        a: "a2",
+        ";": "aSharp2",
+        k: "b2",
+        o: "c3",
+        ",": "cSharp3",
+        e: "d3",
+        ".": "dSharp3",
+        u: "f3",
+        x: "e3",
+        p: "fSharp3",
+        i: "g3",
+        y: "gSharp3", // HIGH gSharp (left hand)
+        "/": "gSharp3", // HIGH gSharp (right hand)
+        s: "a3",
+        l: "aSharp3",
+        m: "b3",
+        n: "c4",
+        r: "cSharp4",
+        t: "d4",
+        c: "dSharp4",
+        b: "e4",
+        h: "f4",
+        g: "fSharp4",
+        d: "g4",
+        f: "gSharp4", // HIGHEST gSharp (rightmost)
+      };
+
+      // Current keyboard mapping (default is standard)
+      let currentKeyToNoteId = { ...standardKeyToNoteId };
+
+      // Octave control variables
+      let leftHandOctave = 3; // Default octave for left hand
+      let rightHandOctave = 4; // Default octave for right hand
+
+      // Define which keys belong to which hand based on layout
+      const handMappings = {
+        standard: {
+          left: new Set([
+            "z",
+            "a",
+            "q",
+            "v",
+            "s",
+            "w",
+            "d",
+            "e",
+            "f",
+            "b",
+            "g",
+            "r",
+            "t",
+          ]),
+          right: new Set([
+            "/",
+            ";",
+            "p",
+            "m",
+            "l",
+            "o",
+            "k",
+            "i",
+            "j",
+            "n",
+            "h",
+            "u",
+            "y",
+          ]),
+        },
+        custom: {
+          left: new Set([
+            "'",
+            "a",
+            ";",
+            "k",
+            "o",
+            ",",
+            "e",
+            ".",
+            "u",
+            "x",
+            "p",
+            "i",
+            "y",
+          ]),
+          right: new Set([
+            "/",
+            "s",
+            "l",
+            "m",
+            "n",
+            "r",
+            "t",
+            "c",
+            "b",
+            "h",
+            "g",
+            "d",
+            "f",
+          ]),
+        },
+      };
+
+      // Define key positions within each hand (0 = lowest, higher number = higher pitch)
+      const keyPositions = {
+        standard: {
+          left: {
+            z: 0, // lowest (gSharp)
+            a: 1, // a
+            q: 2, // aSharp
+            v: 3, // b
+            s: 4, // c
+            w: 5, // cSharp
+            d: 6, // d
+            e: 7, // dSharp
+            b: 8, // e
+            f: 9, // f
+            r: 10, // fSharp
+            g: 11, // g
+            t: 12, // highest (gSharp)
+          },
+          right: {
+            "/": 0, // lowest (gSharp)
+            ";": 1, // a
+            p: 2, // aSharp
+            m: 3, // b
+            l: 4, // c
+            o: 5, // cSharp
+            k: 6, // d
+            i: 7, // dSharp
+            n: 8, // e
+            j: 9, // f
+            u: 10, // fSharp
+            h: 11, // g
+            y: 12, // highest (gSharp)
+          },
+        },
+        custom: {
+          left: {
+            "'": 0, // lowest (gSharp)
+            a: 1, // a
+            ";": 2, // aSharp
+            k: 3, // b
+            o: 4, // c
+            ",": 5, // cSharp
+            e: 6, // d
+            ".": 7, // dSharp
+            x: 8, // e
+            u: 9, // f
+            p: 10, // fSharp
+            i: 11, // g
+            y: 12, // highest (gSharp)
+          },
+          right: {
+            "/": 0, // lowest (gSharp)
+            s: 1, // a
+            l: 2, // aSharp
+            m: 3, // b
+            n: 4, // c
+            r: 5, // cSharp
+            t: 6, // d
+            c: 7, // dSharp
+            b: 8, // e
+            h: 9, // f
+            g: 10, // fSharp
+            d: 11, // g
+            f: 12, // highest (gSharp)
+          },
+        },
+      };
+
+      // Octave control keys
+      const octaveControls = {
+        standard: {
+          leftDown: "x",
+          leftUp: "c",
+          rightDown: ",",
+          rightUp: ".",
+        },
+        custom: {
+          leftDown: "q",
+          leftUp: "j",
+          rightDown: "v",
+          rightUp: "w",
+        },
+      };
+
+      // Web Audio API variables
+      let audioContext;
+      let audioBuffers = {};
+      let isAudioReady = false;
+      let keysCurrentlyPressed = {};
+
+      // Fallback HTML5 audio elements cache
+      const audioElements = {};
+
+      function createDynamicKeyMapping(baseMapping, leftOctave, rightOctave) {
+        const dynamicMapping = {};
+
+        const currentLayout = document.querySelector(
+          'input[name="keyboardLayout"]:checked'
+        ).value;
+        const leftHandKeys = handMappings[currentLayout].left;
+        const rightHandKeys = handMappings[currentLayout].right;
+        const positions = keyPositions[currentLayout];
+
+        for (const [key, noteId] of Object.entries(baseMapping)) {
+          const match = noteId.match(/^([a-gA-G](?:Sharp)?)(\d+)$/);
+          if (!match) continue;
+
+          const noteName = match[1];
+          let baseOctave;
+          let isLowestKey = false;
+          let isHighestKey = false;
+
+          // Determine which hand and position
+          if (leftHandKeys.has(key)) {
+            baseOctave = leftOctave;
+            const position = positions.left[key];
+            isLowestKey = position === 0;
+            isHighestKey = position === 12;
+          } else if (rightHandKeys.has(key)) {
+            baseOctave = rightOctave;
+            const position = positions.right[key];
+            isLowestKey = position === 0;
+            isHighestKey = position === 12;
+          } else {
+            baseOctave = parseInt(match[2]);
+          }
+
+          let adjustedOctave;
+
+          // FIXED LOGIC: Handle gSharp specially based on position
+          if (noteName === "gSharp") {
+            if (isLowestKey) {
+              // Lowest gSharp should be from previous octave
+              adjustedOctave = Math.max(2, Math.min(6, baseOctave - 1));
+            } else if (isHighestKey) {
+              // Highest gSharp should be from current octave
+              adjustedOctave = Math.max(2, Math.min(6, baseOctave));
+            } else {
+              // Middle gSharp (if any) - treat as current octave
+              adjustedOctave = Math.max(2, Math.min(6, baseOctave));
+            }
+          } else {
+            // For other notes that come "before C" in the scale
+            const isBeforeC = ["a", "aSharp", "b"].includes(noteName);
+            adjustedOctave = Math.max(
+              2,
+              Math.min(6, baseOctave - (isBeforeC ? 1 : 0))
+            );
+          }
+
+          dynamicMapping[key] = `${noteName}${adjustedOctave}`;
+        }
+
+        return dynamicMapping;
+      }
+
+      // Initialize Web Audio API
+      async function initializeAudio() {
+        const loadingStatus = document.getElementById("loadingStatus");
+        const initButton = document.getElementById("initAudio");
+
+        loadingStatus.textContent = "Initializing audio...";
+        initButton.disabled = true;
+
+        try {
+          // Create audio context
+          audioContext = new (window.AudioContext ||
+            window.webkitAudioContext)();
+
+          // Resume audio context if it's suspended (required by some browsers)
+          if (audioContext.state === "suspended") {
+            await audioContext.resume();
+          }
+
+          loadingStatus.textContent = "Loading audio files...";
+
+          // Load all audio files into buffers
+          const loadPromises = [];
+          notes.forEach((note) => {
+            [2, 3, 4, 5, 6].forEach((octave) => {
+              const noteId = `${note}${octave}`;
+              // Match your original file naming convention
+              const url = `./sound_assets/${note}_${octave}_elec_guitar.wav`;
+              loadPromises.push(loadAudioFile(noteId, url));
+            });
+          });
+
+          const results = await Promise.allSettled(loadPromises);
+          const failed = results.filter((r) => r.status === "rejected").length;
+
+          if (failed > 0) {
+            console.warn(
+              `${failed} audio files failed to load, but continuing...`
+            );
+          }
+
+          isAudioReady = true;
+          loadingStatus.textContent = `Audio ready! You can now play the piano. (${
+            results.length - failed
+          }/${results.length} files loaded)`;
+          loadingStatus.className = "ready-indicator";
+          initButton.style.display = "none";
+        } catch (error) {
+          console.error("Audio initialization failed:", error);
+          loadingStatus.textContent =
+            "Web Audio failed. Using HTML5 audio system - piano is ready!";
+          loadingStatus.className = "ready-indicator";
+          initButton.style.display = "none";
+          isAudioReady = false; // Force fallback to HTML5 audio
+        }
+      }
+
+      // Load individual audio file into buffer
+      async function loadAudioFile(noteId, url) {
+        try {
+          console.log(`Attempting to load: ${url}`);
+          const response = await fetch(url);
+          if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+          }
+          const arrayBuffer = await response.arrayBuffer();
+          const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+          audioBuffers[noteId] = audioBuffer;
+          console.log(`✓ Successfully loaded: ${noteId} from ${url}`);
+        } catch (error) {
+          console.warn(`✗ Failed to load ${url}:`, error.message);
+          // Create a very short silence buffer as fallback
+          const length = audioContext.sampleRate * 0.01; // 10ms of silence
+          const buffer = audioContext.createBuffer(
+            1,
+            length,
+            audioContext.sampleRate
+          );
+          audioBuffers[noteId] = buffer;
+        }
+      }
+
+      // Play note using Web Audio API
+      function playNote(noteId) {
+        if (!isAudioReady || !audioBuffers[noteId]) {
+          return;
+        }
+
+        const source = audioContext.createBufferSource();
+        source.buffer = audioBuffers[noteId];
+
+        // Add a small gain node for volume control
+        const gainNode = audioContext.createGain();
+        gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
+
+        source.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        source.start();
+      }
+
+      // Create fallback HTML5 audio elements
+      function createFallbackAudio() {
+        notes.forEach((note) => {
+          [2, 3, 4, 5, 6].forEach((octave) => {
+            const noteId = `${note}${octave}`;
+            const audioEl = document.createElement("audio");
+            audioEl.id = noteId;
+            audioEl.src = `./sound_assets/${note}_${octave}_elec_guitar.wav`;
+            audioEl.preload = "auto";
+            document.body.appendChild(audioEl);
+            audioElements[noteId] = audioEl;
+          });
+        });
+      }
+
+      // Fallback play function using HTML5 audio
+      function playNoteFallback(noteId) {
+        const audioEl = audioElements[noteId];
+        if (audioEl) {
+          audioEl.currentTime = 0;
+          audioEl.play().catch((error) => {
+            console.error(`Failed to play ${noteId}:`, error);
+          });
+        } else {
+          console.warn(`Audio element for '${noteId}' not found.`);
+        }
+      }
+
+      // Update debug display
+      function updateDebugDisplay() {
+        const debugDiv = document.getElementById("debugMapping");
+        const currentLayout = document.querySelector(
+          'input[name="keyboardLayout"]:checked'
+        ).value;
+
+        let debugText = `Layout: ${currentLayout}\n`;
+        debugText += `Left Hand Octave: ${leftHandOctave}, Right Hand Octave: ${rightHandOctave}\n\n`;
+
+        // Group by hand
+        const leftMappings = [];
+        const rightMappings = [];
+
+        const leftHandKeys = handMappings[currentLayout].left;
+        const rightHandKeys = handMappings[currentLayout].right;
+
+        for (const [key, noteId] of Object.entries(currentKeyToNoteId)) {
+          if (leftHandKeys.has(key)) {
+            leftMappings.push(`${key} → ${noteId}`);
+          } else if (rightHandKeys.has(key)) {
+            rightMappings.push(`${key} → ${noteId}`);
+          }
+        }
+
+        debugText += "LEFT HAND:\n" + leftMappings.join("\n");
+        debugText += "\n\nRIGHT HAND:\n" + rightMappings.join("\n");
+
+        debugDiv.textContent = debugText;
+      }
+
+      // Update octave displays in UI
+      function updateOctaveDisplay() {
+        document.getElementById("leftOctave").textContent = leftHandOctave;
+        document.getElementById("rightOctave").textContent = rightHandOctave;
+
+        // Update octave control key displays based on current layout
+        const currentLayout = document.querySelector(
+          'input[name="keyboardLayout"]:checked'
+        ).value;
+        const controls = octaveControls[currentLayout];
+
+        document.getElementById("leftOctaveDown").textContent =
+          controls.leftDown;
+        document.getElementById("leftOctaveUp").textContent = controls.leftUp;
+        document.getElementById("rightOctaveDown").textContent =
+          controls.rightDown;
+        document.getElementById("rightOctaveUp").textContent = controls.rightUp;
+      }
+
+      // Handle octave changes
+      function changeOctave(hand, direction) {
+        if (hand === "left") {
+          if (direction === "up" && leftHandOctave < 6) {
+            leftHandOctave++;
+          } else if (direction === "down" && leftHandOctave > 3) {
+            leftHandOctave--;
+          }
+        } else if (hand === "right") {
+          if (direction === "up" && rightHandOctave < 6) {
+            rightHandOctave++;
+          } else if (direction === "down" && rightHandOctave > 3) {
+            rightHandOctave--;
+          }
+        }
+
+        // Update the current key mapping with new octaves
+        const currentLayout = document.querySelector(
+          'input[name="keyboardLayout"]:checked'
+        ).value;
+        const baseMapping =
+          currentLayout === "standard"
+            ? standardKeyToNoteId
+            : customKeyToNoteId;
+        currentKeyToNoteId = createDynamicKeyMapping(
+          baseMapping,
+          leftHandOctave,
+          rightHandOctave
+        );
+
+        updateOctaveDisplay();
+        updateDebugDisplay();
+        console.log(
+          `Octave changed - Left: ${leftHandOctave}, Right: ${rightHandOctave}`
+        );
+      }
+
+      // Updates the current keyboard layout mapping
+      function updateKeyboardLayout(layout) {
+        const baseMapping =
+          layout === "standard" ? standardKeyToNoteId : customKeyToNoteId;
+        currentKeyToNoteId = createDynamicKeyMapping(
+          baseMapping,
+          leftHandOctave,
+          rightHandOctave
+        );
+
+        document.getElementById("currentLayout").innerText =
+          layout === "standard" ? "Standard" : "Custom";
+        updateOctaveDisplay();
+        updateDebugDisplay();
+        console.log(`Keyboard layout switched to: ${layout}`);
+      }
+
+      /**
+       * Translates sheet music input into keys to press based on the current keyboard layout.
+       * Handles both individual notes and chords.
+       * @param {Array<string>} sheetMusic - Array of note IDs and chords.
+       * @returns {Array<string | Array<string>>} - Array of keys to press or arrays of keys for chords.
+       */
+      function translateSheetMusicToKeys(sheetMusic) {
+        const noteIdToKey = {};
+        for (const [key, noteId] of Object.entries(currentKeyToNoteId)) {
+          noteIdToKey[noteId] = key;
+        }
+
+        const translatedKeys = [];
+
+        sheetMusic.forEach((item) => {
+          if (item.includes("+")) {
+            // Handle chord
+            const chordNotes = item.split("+");
+            const chordKeys = chordNotes.map((noteId) => {
+              const key = noteIdToKey[noteId];
+              if (key) {
+                return key;
+              } else {
+                console.warn(
+                  `No key mapping found for note '${noteId}' in the current layout.`
+                );
+                return null;
+              }
+            });
+            translatedKeys.push(chordKeys);
+          } else {
+            // Handle single note
+            const noteId = item;
+            const key = noteIdToKey[noteId];
+            if (key) {
+              translatedKeys.push(key);
+            } else {
+              console.warn(
+                `No key mapping found for note '${noteId}' in the current layout.`
+              );
+              translatedKeys.push(null);
+            }
+          }
+        });
+
+        return translatedKeys;
+      }
+
+      document.addEventListener("DOMContentLoaded", () => {
+        // Create fallback audio elements immediately
+        createFallbackAudio();
+
+        // Set up the initialization button with better error handling
+        document.getElementById("initAudio").addEventListener("click", () => {
+          console.log("Initialize button clicked");
+          initializeAudio().catch((error) => {
+            console.error("Initialization error:", error);
+            document.getElementById("loadingStatus").textContent =
+              "Initialization failed. Piano ready with basic audio.";
+            document.getElementById("loadingStatus").className =
+              "ready-indicator";
+            document.getElementById("initAudio").style.display = "none";
+          });
+        });
+
+        // Handle layout toggle
+        const layoutRadios = document.getElementsByName("keyboardLayout");
+        layoutRadios.forEach((radio) => {
+          radio.addEventListener("change", (e) => {
+            updateKeyboardLayout(e.target.value);
+          });
+        });
+
+        // Initialize the layout and octave display
+        updateKeyboardLayout("standard");
+        updateOctaveDisplay();
+        updateDebugDisplay();
+
+        // Key press handling - OPTIMIZED FOR IMMEDIATE RESPONSE
+        document.addEventListener("keydown", (e) => {
+          const key = e.key.toLowerCase();
+          if (keysCurrentlyPressed[key]) {
+            return;
+          }
+
+          // Check for octave control keys first
+          const currentLayout = document.querySelector(
+            'input[name="keyboardLayout"]:checked'
+          ).value;
+          const controls = octaveControls[currentLayout];
+
+          if (key === controls.leftDown) {
+            changeOctave("left", "down");
+            keysCurrentlyPressed[key] = true;
+            return;
+          } else if (key === controls.leftUp) {
+            changeOctave("left", "up");
+            keysCurrentlyPressed[key] = true;
+            return;
+          } else if (key === controls.rightDown) {
+            changeOctave("right", "down");
+            keysCurrentlyPressed[key] = true;
+            return;
+          } else if (key === controls.rightUp) {
+            changeOctave("right", "up");
+            keysCurrentlyPressed[key] = true;
+            return;
+          }
+
+          // Handle regular note playing
+          if (!currentKeyToNoteId[key]) {
+            return;
+          }
+
+          const noteId = currentKeyToNoteId[key];
+          console.log(`Key pressed: '${key}', Note: '${noteId}'`);
+
+          // Try Web Audio API first for lowest latency, fallback to HTML5
+          if (isAudioReady) {
+            playNote(noteId);
+          } else {
+            playNoteFallback(noteId);
+          }
+
+          keysCurrentlyPressed[key] = true;
+        });
+
+        document.addEventListener("keyup", (e) => {
+          const key = e.key.toLowerCase();
+          keysCurrentlyPressed[key] = false;
+        });
+
+        // Handle sheet music translation
+        document
+          .getElementById("translateButton")
+          .addEventListener("click", () => {
+            const input = document
+              .getElementById("sheetMusicInput")
+              .value.trim();
+            if (!input) {
+              alert("Please enter some sheet music notes.");
+              return;
+            }
+
+            // Split input by spaces to get notes and chords
+            const sheetMusic = input.split(/\s+/);
+
+            // Validate notes and chords
+            const validNoteIds = new Set();
+            for (const note of notes) {
+              [2, 3, 4, 5, 6].forEach((octave) =>
+                validNoteIds.add(`${note}${octave}`)
+              );
+            }
+
+            const invalidItems = [];
+            sheetMusic.forEach((item) => {
+              const notesInItem = item.split("+");
+              notesInItem.forEach((noteId) => {
+                if (!validNoteIds.has(noteId)) {
+                  invalidItems.push(noteId);
+                }
+              });
+            });
+
+            if (invalidItems.length > 0) {
+              alert(`Invalid note IDs: ${invalidItems.join(", ")}`);
+              return;
+            }
+
+            const keysToPlay = translateSheetMusicToKeys(sheetMusic);
+
+            const outputDiv = document.getElementById("output");
+            outputDiv.innerHTML = "";
+
+            // Collect keys to display
+            const keysOutput = [];
+
+            keysToPlay.forEach((item) => {
+              if (Array.isArray(item)) {
+                // This is a chord
+                const keys = item.filter((k) => k !== null).join("+");
+                keysOutput.push(keys);
+              } else if (item) {
+                // Single note
+                keysOutput.push(item);
+              } else {
+                keysOutput.push("N/A");
+              }
+            });
+
+            const outputText = keysOutput.join(" ");
+            outputDiv.textContent = outputText;
+          });
+      });
+    </script>
+  </body>
 </html>
