@@ -1,6 +1,6 @@
 /**
  * audioPlay.js
- * 
+ *
  * Handles the creation of audio elements and plays piano notes based on keyboard input.
  * Switches mappings based on selected keyboard layout.
  * Provides functionality to translate sheet music to keys based on current layout.
@@ -32,11 +32,12 @@ const standardKeyToNoteId = {
     w: "cSharp3",
     d: "d3",
     e: "dSharp3",
-    f: "e3",
-    b: "f3",
-    g: "fSharp3",
-    r: "g3",
+    f: "f3",
+    b: "e3",
+    r: "fSharp3",
+    g: "g3",
     t: "gSharp3",
+    "/":"gSharp3",
     ";": "a3",
     p: "aSharp3",
     m: "b3",
@@ -44,10 +45,10 @@ const standardKeyToNoteId = {
     o: "cSharp4",
     k: "d4",
     i: "dSharp4",
-    j: "e4",
-    n: "f4",
-    h: "fSharp4",
-    u: "g4",
+    j: "f4",
+    n: "e4",
+    u: "fSharp4",
+    h: "g4",
     y: "gSharp4",
 };
 
@@ -61,11 +62,12 @@ const customKeyToNoteId = {
     ",": "cSharp3",
     e: "d3",
     ".": "dSharp3",
-    u: "e3",
-    x: "f3",
-    i: "fSharp3",
-    p: "g3",
+    u: "f3",
+    x: "e3",
+    p: "fSharp3",
+    i: "g3",
     y: "gSharp3",
+    "/": "gSharp3",
     s: "a3",
     l: "aSharp3",
     m: "b3",
@@ -73,10 +75,10 @@ const customKeyToNoteId = {
     r: "cSharp4",
     t: "d4",
     c: "dSharp4",
-    h: "e4",
-    b: "f4",
-    d: "fSharp4",
-    g: "g4",
+    b: "e4",
+    h: "f4",
+    g: "fSharp4",
+    d: "g4",
     f: "gSharp4",
 };
 
