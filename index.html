@@ -2,7 +2,7 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <title>Keyboard Piano Application</title>
+    <title>Keyboard Piano/Guitar Application</title>
     <style>
       body {
         font-family: Arial, sans-serif;
@@ -95,6 +95,47 @@
         border-radius: 8px;
         background-color: #f9f9f9;
       }
+      .instrument-selector {
+        margin-bottom: 30px;
+        padding: 20px;
+        border: 2px solid #ff9800;
+        border-radius: 8px;
+        background-color: #fff3e0;
+      }
+      .instrument-selector h3 {
+        margin-top: 0;
+        color: #e65100;
+      }
+      .instrument-buttons {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-top: 15px;
+      }
+      .instrument-button {
+        padding: 12px 24px;
+        border: 2px solid #ff9800;
+        background-color: white;
+        color: #e65100;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 16px;
+        transition: all 0.3s ease;
+      }
+      .instrument-button:hover {
+        background-color: #ffe0b3;
+      }
+      .instrument-button.active {
+        background-color: #ff9800;
+        color: white;
+        font-weight: bold;
+      }
+      .current-instrument {
+        margin-top: 10px;
+        font-size: 1.1em;
+        font-weight: bold;
+        color: #e65100;
+      }
       .debug-info {
         margin-top: 30px;
         padding: 20px;
@@ -122,7 +163,7 @@
     </style>
   </head>
   <body>
-    <h1>Keyboard Piano Application</h1>
+    <h1>Keyboard Piano/Guitar Application</h1>
 
     <div class="init-section">
       <button id="initAudio" class="init-button">
@@ -130,6 +171,17 @@
       </button>
       <div id="loadingStatus" class="loading-indicator">
         Click the button to start
+      </div>
+    </div>
+
+    <div class="instrument-selector">
+      <h3>Instrument Selection</h3>
+      <div class="instrument-buttons">
+        <button id="pianoBtn" class="instrument-button active">Piano</button>
+        <button id="guitarBtn" class="instrument-button">Guitar</button>
+      </div>
+      <div class="current-instrument">
+        Current Instrument: <span id="currentInstrument">Piano</span>
       </div>
     </div>
 
@@ -196,8 +248,7 @@
 
     <script>
       /**
-       * audioPlay.js - Fixed version with proper octave handling
-       * The main fix: differentiate between low and high gSharp notes
+       * audioPlay.js - Piano/Guitar version with instrument selection
        */
 
       // Define the available notes
@@ -215,6 +266,25 @@
         "g",
         "gSharp",
       ];
+
+      // Note name mappings for file naming (convert from our internal names to file names)
+      const noteFileMapping = {
+        a: "A",
+        aSharp: "As",
+        b: "B",
+        c: "C",
+        cSharp: "Cs",
+        d: "D",
+        dSharp: "Ds",
+        e: "E",
+        f: "F",
+        fSharp: "Fs",
+        g: "G",
+        gSharp: "Gs",
+      };
+
+      // Current instrument selection
+      let currentInstrument = "piano"; // "piano" or "guitar"
 
       // Standard keyboard mapping - with position indicators for low/high gSharp
       const standardKeyToNoteId = {
@@ -444,6 +514,25 @@
       // Fallback HTML5 audio elements cache
       const audioElements = {};
 
+      // Convert octave number to word format for file paths
+      function getOctaveFolder(octave) {
+        const octaveWords = {
+          2: "2nd-Octave",
+          3: "3rd-Octave",
+          4: "4th-Octave",
+          5: "5th-Octave",
+          6: "6th-Octave",
+        };
+        return octaveWords[octave] || "4th-Octave";
+      }
+
+      // Generate file path for audio files
+      function getAudioFilePath(note, octave, instrument) {
+        const noteFileName = noteFileMapping[note];
+        const octaveFolder = getOctaveFolder(octave);
+        return `./sound_assets/${instrument}/${octaveFolder}/${noteFileName}${octave}_${instrument}.wav`;
+      }
+
       function createDynamicKeyMapping(baseMapping, leftOctave, rightOctave) {
         const dynamicMapping = {};
 
@@ -527,44 +616,76 @@
 
           loadingStatus.textContent = "Loading audio files...";
 
-          // Load all audio files into buffers
-          const loadPromises = [];
-          notes.forEach((note) => {
-            [2, 3, 4, 5, 6].forEach((octave) => {
-              const noteId = `${note}${octave}`;
-              // Match your original file naming convention
-              const url = `./sound_assets/${note}_${octave}_elec_guitar.wav`;
-              loadPromises.push(loadAudioFile(noteId, url));
-            });
-          });
-
-          const results = await Promise.allSettled(loadPromises);
-          const failed = results.filter((r) => r.status === "rejected").length;
-
-          if (failed > 0) {
-            console.warn(
-              `${failed} audio files failed to load, but continuing...`
-            );
-          }
+          // Load all audio files into buffers for both instruments
+          await loadAllAudioFiles();
 
           isAudioReady = true;
-          loadingStatus.textContent = `Audio ready! You can now play the piano. (${
-            results.length - failed
-          }/${results.length} files loaded)`;
+          loadingStatus.textContent = `Audio ready! You can now play the ${currentInstrument}.`;
           loadingStatus.className = "ready-indicator";
           initButton.style.display = "none";
         } catch (error) {
           console.error("Audio initialization failed:", error);
           loadingStatus.textContent =
-            "Web Audio failed. Using HTML5 audio system - piano is ready!";
+            "Web Audio failed. Using HTML5 audio system - instrument is ready!";
           loadingStatus.className = "ready-indicator";
           initButton.style.display = "none";
           isAudioReady = false; // Force fallback to HTML5 audio
         }
       }
 
+      // Load all audio files for both instruments (optimized loading)
+      async function loadAllAudioFiles() {
+        const loadPromises = [];
+
+        // Load current instrument first for immediate responsiveness
+        notes.forEach((note) => {
+          [2, 3, 4, 5, 6].forEach((octave) => {
+            const noteId = `${note}${octave}`;
+            const url = getAudioFilePath(note, octave, currentInstrument);
+            const bufferKey = `${currentInstrument}_${noteId}`;
+            loadPromises.push(loadAudioFile(bufferKey, url));
+          });
+        });
+
+        // Load current instrument first
+        const currentResults = await Promise.allSettled(loadPromises);
+        const currentFailed = currentResults.filter(
+          (r) => r.status === "rejected"
+        ).length;
+
+        console.log(
+          `Loaded ${currentResults.length - currentFailed}/${
+            currentResults.length
+          } ${currentInstrument} files`
+        );
+
+        // Load other instrument in background
+        const otherInstrument =
+          currentInstrument === "piano" ? "guitar" : "piano";
+        const backgroundPromises = [];
+
+        notes.forEach((note) => {
+          [2, 3, 4, 5, 6].forEach((octave) => {
+            const noteId = `${note}${octave}`;
+            const url = getAudioFilePath(note, octave, otherInstrument);
+            const bufferKey = `${otherInstrument}_${noteId}`;
+            backgroundPromises.push(loadAudioFile(bufferKey, url));
+          });
+        });
+
+        // Load other instrument without waiting
+        Promise.allSettled(backgroundPromises).then((results) => {
+          const failed = results.filter((r) => r.status === "rejected").length;
+          console.log(
+            `Background loaded ${results.length - failed}/${
+              results.length
+            } ${otherInstrument} files`
+          );
+        });
+      }
+
       // Load individual audio file into buffer
-      async function loadAudioFile(noteId, url) {
+      async function loadAudioFile(bufferKey, url) {
         try {
           console.log(`Attempting to load: ${url}`);
           const response = await fetch(url);
@@ -573,8 +694,8 @@
           }
           const arrayBuffer = await response.arrayBuffer();
           const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
-          audioBuffers[noteId] = audioBuffer;
-          console.log(`✓ Successfully loaded: ${noteId} from ${url}`);
+          audioBuffers[bufferKey] = audioBuffer;
+          console.log(`✓ Successfully loaded: ${bufferKey} from ${url}`);
         } catch (error) {
           console.warn(`✗ Failed to load ${url}:`, error.message);
           // Create a very short silence buffer as fallback
@@ -584,53 +705,129 @@
             length,
             audioContext.sampleRate
           );
-          audioBuffers[noteId] = buffer;
+          audioBuffers[bufferKey] = buffer;
         }
       }
 
-      // Play note using Web Audio API
+      // Play note using Web Audio API (optimized for low latency)
       function playNote(noteId) {
-        if (!isAudioReady || !audioBuffers[noteId]) {
+        const bufferKey = `${currentInstrument}_${noteId}`;
+        if (!isAudioReady || !audioBuffers[bufferKey]) {
+          // Immediate fallback to HTML5 if Web Audio buffer not ready
+          playNoteFallback(noteId);
           return;
         }
 
-        const source = audioContext.createBufferSource();
-        source.buffer = audioBuffers[noteId];
+        try {
+          const source = audioContext.createBufferSource();
+          source.buffer = audioBuffers[bufferKey];
 
-        // Add a small gain node for volume control
-        const gainNode = audioContext.createGain();
-        gainNode.gain.setValueAtTime(0.7, audioContext.currentTime);
+          // Simplified audio path for minimal latency
+          const gainNode = audioContext.createGain();
+          gainNode.gain.value = 0.7; // Set immediately instead of scheduling
 
-        source.connect(gainNode);
-        gainNode.connect(audioContext.destination);
-        source.start();
+          source.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          source.start(0); // Start immediately
+        } catch (error) {
+          console.warn(
+            `Web Audio failed for ${noteId}, using fallback:`,
+            error
+          );
+          playNoteFallback(noteId);
+        }
       }
 
       // Create fallback HTML5 audio elements
       function createFallbackAudio() {
-        notes.forEach((note) => {
-          [2, 3, 4, 5, 6].forEach((octave) => {
-            const noteId = `${note}${octave}`;
-            const audioEl = document.createElement("audio");
-            audioEl.id = noteId;
-            audioEl.src = `./sound_assets/${note}_${octave}_elec_guitar.wav`;
-            audioEl.preload = "auto";
-            document.body.appendChild(audioEl);
-            audioElements[noteId] = audioEl;
+        const instruments = ["piano", "guitar"];
+
+        instruments.forEach((instrument) => {
+          notes.forEach((note) => {
+            [2, 3, 4, 5, 6].forEach((octave) => {
+              const noteId = `${note}${octave}`;
+              const elementId = `${instrument}_${noteId}`;
+              const audioEl = document.createElement("audio");
+              audioEl.id = elementId;
+              audioEl.src = getAudioFilePath(note, octave, instrument);
+              audioEl.preload = "auto";
+              document.body.appendChild(audioEl);
+              audioElements[elementId] = audioEl;
+            });
           });
         });
       }
 
       // Fallback play function using HTML5 audio
       function playNoteFallback(noteId) {
-        const audioEl = audioElements[noteId];
+        const elementId = `${currentInstrument}_${noteId}`;
+        const audioEl = audioElements[elementId];
         if (audioEl) {
           audioEl.currentTime = 0;
           audioEl.play().catch((error) => {
             console.error(`Failed to play ${noteId}:`, error);
           });
         } else {
-          console.warn(`Audio element for '${noteId}' not found.`);
+          console.warn(`Audio element for '${elementId}' not found.`);
+        }
+      }
+
+      // Switch instrument (with background loading)
+      function switchInstrument(instrument) {
+        currentInstrument = instrument;
+        document.getElementById("currentInstrument").textContent =
+          instrument.charAt(0).toUpperCase() + instrument.slice(1);
+
+        // Update button states
+        document
+          .getElementById("pianoBtn")
+          .classList.toggle("active", instrument === "piano");
+        document
+          .getElementById("guitarBtn")
+          .classList.toggle("active", instrument === "guitar");
+
+        // Update loading status if audio is ready
+        const loadingStatus = document.getElementById("loadingStatus");
+        if (isAudioReady) {
+          loadingStatus.textContent = `Audio ready! You can now play the ${instrument}.`;
+        }
+
+        // If switching instruments and audio is initialized, load missing samples in background
+        if (isAudioReady) {
+          loadMissingInstrumentSamples(instrument);
+        }
+
+        console.log(`Switched to ${instrument}`);
+      }
+
+      // Load missing samples for switched instrument
+      async function loadMissingInstrumentSamples(instrument) {
+        const loadPromises = [];
+
+        notes.forEach((note) => {
+          [2, 3, 4, 5, 6].forEach((octave) => {
+            const noteId = `${note}${octave}`;
+            const bufferKey = `${instrument}_${noteId}`;
+
+            // Only load if not already loaded
+            if (!audioBuffers[bufferKey]) {
+              const url = getAudioFilePath(note, octave, instrument);
+              loadPromises.push(loadAudioFile(bufferKey, url));
+            }
+          });
+        });
+
+        if (loadPromises.length > 0) {
+          console.log(
+            `Loading ${loadPromises.length} missing ${instrument} samples...`
+          );
+          const results = await Promise.allSettled(loadPromises);
+          const failed = results.filter((r) => r.status === "rejected").length;
+          console.log(
+            `Loaded ${results.length - failed}/${
+              results.length
+            } missing ${instrument} samples`
+          );
         }
       }
 
@@ -642,6 +839,7 @@
         ).value;
 
         let debugText = `Layout: ${currentLayout}\n`;
+        debugText += `Instrument: ${currentInstrument}\n`;
         debugText += `Left Hand Octave: ${leftHandOctave}, Right Hand Octave: ${rightHandOctave}\n\n`;
 
         // Group by hand
@@ -796,11 +994,20 @@
           initializeAudio().catch((error) => {
             console.error("Initialization error:", error);
             document.getElementById("loadingStatus").textContent =
-              "Initialization failed. Piano ready with basic audio.";
+              "Initialization failed. Instrument ready with basic audio.";
             document.getElementById("loadingStatus").className =
               "ready-indicator";
             document.getElementById("initAudio").style.display = "none";
           });
+        });
+
+        // Handle instrument selection
+        document.getElementById("pianoBtn").addEventListener("click", () => {
+          switchInstrument("piano");
+        });
+
+        document.getElementById("guitarBtn").addEventListener("click", () => {
+          switchInstrument("guitar");
         });
 
         // Handle layout toggle
@@ -853,7 +1060,9 @@
           }
 
           const noteId = currentKeyToNoteId[key];
-          console.log(`Key pressed: '${key}', Note: '${noteId}'`);
+          console.log(
+            `Key pressed: '${key}', Note: '${noteId}', Instrument: '${currentInstrument}'`
+          );
 
           // Try Web Audio API first for lowest latency, fallback to HTML5
           if (isAudioReady) {
